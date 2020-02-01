@@ -1,0 +1,110 @@
+﻿Homework 2
+----------
+trees.data <- read.csv('Trees.csv')
+
+# Volume = B • <Girth, Height, Girth * Height, Girth^2, Girth^2 * Height>
+VolModel <- (Volume ∼ Girth + Height + GirthHeight + Girth2 + Girth2Height)
+glm.fit <- glm(VolModel, data = trees.data)
+
+n <- dim(trees.data)[1]
+k <- 5
+
+set.seed(2)
+groups = c(rep(1:k, 6), 1)
+cvgroups = sample(groups, n)
+
+# prediction via cross-validation
+mses = rep(0, n)
+allpredictedCV = rep(0, n)
+for (i in 1:k)  {
+  groupi = (cvgroups == i)
+  lmfitCV = lm(formula = VolModel, data = trees.data, subset = !groupi)
+  allpredictedCV[groupi] = predict.lm(lmfitCV, trees.data[groupi, ])
+  mses[i] = mean((trees.data$Volume[groupi] - allpredictedCV[groupi])^2)
+}
+
+mean(mses)
+
+library(boot)  #need to install package
+
+set.seed(2)
+
+beta.fn.VolModel = function(inputdata, index) {
+  lmfitboot = lm(formula = VolModel, data=inputdata[index, ])
+  return(lmfitboot$coef)
+}
+
+VolModel.output = boot(trees.data, beta.fn.VolModel, R = 1000)
+
+
+VolModel2 <- (Volume ∼ Girth + Height)
+VolModel3 <- (Volume ∼ Girth + Height + GirthHeight)
+VolModel4 <- (Volume ∼ Girth + Height + Girth2 + Girth2Height)
+VolModel5 <- (Volume ∼ Girth2 + Girth2Height)
+VolModel6 <- (Volume ∼ Girth2Height)
+
+allVolModels <- list(VolModel, VolModel2, VolModel3, VolModel4, VolModel5, VolModel6)
+k <- length(allVolModels)
+CV31 <- numeric(k)
+n=dim(trees.data)[1]
+LOOCVpredictions = rep(NA, n)
+means <- numeric(k)
+for (i in 1:k){
+ for (fold in 1:n) {
+   train.x = trees.data[-fold,]
+   train.y = trees.data$Volume[-fold]
+   valid.x = trees.data[fold,]
+
+   lmfitboot = lm(formula = allVolModels[[i]], data=train.x)
+   LOOCVpredictions[fold] = predict.lm(lmfitboot, valid.x)
+ }
+ CV31[i] <- sum((LOOCVpredictions-trees.data$Volume[-i])^2)/n
+}
+
+k <- length(allVolModels)
+CV5 <- numeric(k)
+n = 5
+LOOCVpredictions = rep(NA, n)
+means <- numeric(k)
+for (i in 1:k){
+ for (fold in 1:n) {
+   train.x = trees.data[-fold,]
+   train.y = trees.data$Volume[-fold]
+   valid.x = trees.data[fold,]
+
+   lmfitboot = lm(formula = allVolModels[[i]], data=train.x)
+   LOOCVpredictions[fold] = predict.lm(lmfitboot, valid.x)
+ }
+ CV5[i] <- sum((LOOCVpredictions-trees.data$Volume)^2)/n
+}
+
+
+
+
+
+
+
+
+
+
+
+
+VolModel <- (Volume ∼ Girth + Height + GirthHeight + Girth2 + Girth2Height)
+glm.fit <- glm(VolModel, data = trees.data)
+
+n <- dim(trees.data)[1]
+k <- 5
+
+set.seed(2)
+groups = c(rep(1:k, 6), 1)
+cvgroups = sample(groups, n)
+
+# prediction via cross-validation
+mses = rep(0, n)
+allpredictedCV = rep(0, n)
+for (i in 1:k)  {
+  groupi = (cvgroups == i)
+  lmfitCV = lm(formula = VolModel, data = trees.data, subset = !groupi)
+  allpredictedCV[groupi] = predict.lm(lmfitCV, trees.data[groupi, ])
+  mses[i] = mean((trees.data$Volume[groupi] - allpredictedCV[groupi])^2)
+}
